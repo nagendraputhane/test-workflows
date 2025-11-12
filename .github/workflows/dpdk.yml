@@ -52,8 +52,7 @@ jobs:
 
           EVENT="${{ github.event_name }}"
 
-          cd "${PWD}/marvell-dpdk"
-          BASE=$(cut -d. -f1,2 < MRVL_VERSION)
+          BASE=25.11
 
           if [ "$EVENT" = "push" ]; then
               MINOR=0
