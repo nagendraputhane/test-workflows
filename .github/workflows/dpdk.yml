@@ -152,13 +152,13 @@ jobs:
           echo "DISTRO=${DISTRO}" >> "$GITHUB_OUTPUT"
       - name: Upload debian package as artifact
         uses: actions/upload-artifact@v4.3.1
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }} || ${{ github.event_name == 'workflow_dispatch' }}
         with:
           name: dpdk-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}-cn10k${{ steps.artifacts.outputs.PKG_POSTFIX }}_${{ steps.artifacts.outputs.MRVL_PKG_VERSION }}_arm64.deb
           path: ${{ github.workspace }}/artifacts/dpdk-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}-cn10k${{ steps.artifacts.outputs.PKG_POSTFIX }}_${{ steps.artifacts.outputs.MRVL_PKG_VERSION }}_arm64.deb
       - name: Delete existing release
         uses: liudonghua123/delete-release-action@v1
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }} || ${{ github.event_name == 'workflow_dispatch' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -166,7 +166,7 @@ jobs:
           suppress_errors: true
       - name: Release DPDK cn10k package
         uses: softprops/action-gh-release@v2.0.4
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }} || ${{ github.event_name == 'workflow_dispatch' }}
         with:
           tag_name: dpdk-cn10k-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}_${{ steps.artifacts.outputs.MRVL_PKG_VERSION }}-${{ steps.artifacts.outputs.DISTRO }}-${{ steps.artifacts.outputs.TAG }}
           files: |
