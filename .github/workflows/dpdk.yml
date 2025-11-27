@@ -43,6 +43,10 @@ jobs:
         id: version
         run: |
           set -x
+          sudo apt-get update -q -y
+          sudo apt-get install -y git
+          git clone https://github.com/MarvellEmbeddedProcessors/marvell-dpdk.git -b dpdk-24.11-release
+          BASE_DIR=${PWD}
           mkdir -p "${PWD}/artifacts"
           git fetch --tags --quiet
 
@@ -69,6 +73,8 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           source artifacts/env
           mkdir -p ~/.ccache
+          BASE_DIR=${PWD}
+          cd "${PWD}/marvell-dpdk"
           sudo apt-get update -q -y
           sudo apt-get install -y build-essential ccache git software-properties-common
           sudo apt-get install -y ccache libarchive-dev libbsd-dev libbpf-dev
@@ -104,11 +110,11 @@ jobs:
           rm -rf "${PWD}/install/~" "${PWD}/install/home"
           mv "${PWD}/install" "${PWD}/dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64"
           dpkg --build "dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64"
-          cp "dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64.deb" ${PWD}/artifacts/.
-          echo "PKG_VERSION_NAME=${PKG_VERSION_NAME}" >> ${PWD}/artifacts/env
-          echo "MRVL_PKG_VERSION=${MRVL_PKG_VERSION}" >> ${PWD}/artifacts/env
-          echo "PKG_POSTFIX=${PKG_POSTFIX}" >> ${PWD}/artifacts/env
-          echo "DISTRO=${DISTRO}" >> ${PWD}/artifacts/env
+          cp "dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64.deb" ${BASE_DIR}/artifacts/.
+          echo "PKG_VERSION_NAME=${PKG_VERSION_NAME}" >> ${BASE_DIR}/artifacts/env
+          echo "MRVL_PKG_VERSION=${MRVL_PKG_VERSION}" >> ${BASE_DIR}/artifacts/env
+          echo "PKG_POSTFIX=${PKG_POSTFIX}" >> ${BASE_DIR}/artifacts/env
+          echo "DISTRO=${DISTRO}" >> ${BASE_DIR}/artifacts/env
       - name: Export version name
         id: artifacts
         run: |
