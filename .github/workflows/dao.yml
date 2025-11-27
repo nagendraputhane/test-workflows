@@ -165,10 +165,10 @@ jobs:
           sudo apt-get install -y ./"dpdk-24.11-cn10k-devel_25.11.0_arm64.deb"
           ccache -p
           pkg-config --list-all
-          export CC="ccache gcc-14"
-          export CXX="ccache g++-14"
+          export CC="gcc-14"
+          export CXX="g++-14"
           export GRPC_BUILD_DIR=/tmp/dao-deps-build
-          ./ci/build/build-deps.sh $GRPC_BUILD_DIR dummyuser cn10k grpc > /dev/null 2>&1
+          ./ci/build/build-deps.sh $GRPC_BUILD_DIR dummyuser cn10k grpc
           export PATH=$GRPC_BUILD_DIR/deps/deps-prefix/host/bin:$PATH
           export LD_LIBRARY_PATH=$GRPC_BUILD_DIR/deps/deps-prefix/host/lib:$LD_LIBRARY_PATH
           export PKG_CONFIG_PATH="$GRPC_BUILD_DIR/deps/deps-prefix/ep/lib/pkgconfig:$GRPC_BUILD_DIR/deps/host/grpc/third_party/re2:${PKG_CONFIG_PATH:-}"
