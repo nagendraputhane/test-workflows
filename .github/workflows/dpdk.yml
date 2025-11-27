@@ -1,4 +1,4 @@
-name: build-dpdk
+name: build-cn10k-dpdk
 
 on:
   workflow_dispatch:
@@ -43,50 +43,24 @@ jobs:
         id: version
         run: |
           set -x
-          sudo apt-get update -q -y
-          sudo apt-get install -y git
-          git clone https://github.com/MarvellEmbeddedProcessors/marvell-dpdk.git -b dpdk-24.11-release
-          BASE_DIR=${PWD}
           mkdir -p "${PWD}/artifacts"
           git fetch --tags --quiet
 
           EVENT="${{ github.event_name }}"
 
-          BASE=25.11
-
           if [ "$EVENT" = "push" ]; then
-              MINOR=0
               PKG_POSTFIX=""
               IS_DEVEL=false
           else
-              LAST=$(git tag -l "${COMPONENT}-${BASE}.*" | sort -V | tail -n1)
-              if [ -z "$LAST" ]; then MINOR=0 ; else
-                MINOR=$(echo "$LAST" | awk -F. '{print $3}')
-                MINOR=$((MINOR+1))
-              fi
               PKG_POSTFIX="-devel"
-            IS_DEVEL=true
+              IS_DEVEL=true
           fi
 
-          MRVL_PKG_VERSION="${BASE}.${MINOR}"
-
           {
-            echo "MRVL_PKG_VERSION=${MRVL_PKG_VERSION}"
             echo "PKG_POSTFIX=${PKG_POSTFIX}"
             echo "IS_DEVEL=${IS_DEVEL}"
             echo "COMPONENT=${COMPONENT}"
-          } >> ${BASE_DIR}/artifacts/env
-
-      - name: push component patch tag
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          set -x
-          source artifacts/env
-          NEWTAG="${COMPONENT}-${MRVL_PKG_VERSION}"
-          git config user.name "github-bot-accelerator"
-          git config user.email "github-bot-accelerator@marvell.com"
-          git tag -l "$NEWTAG" | grep -q . || git tag -a "$NEWTAG" -m "devel bump $NEWTAG"
-          git push origin "$NEWTAG"
+          } >> artifacts/env
 
       - name: Build DPDK and generate package
         id: build
@@ -95,8 +69,6 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           source artifacts/env
           mkdir -p ~/.ccache
-          BASE_DIR=${PWD}
-          cd "${PWD}/marvell-dpdk"
           sudo apt-get update -q -y
           sudo apt-get install -y build-essential ccache git software-properties-common
           sudo apt-get install -y ccache libarchive-dev libbsd-dev libbpf-dev
@@ -112,6 +84,7 @@ jobs:
           sed -i "s/prefix=.*/prefix=/g" "${PWD}/install/lib/aarch64-linux-gnu/pkgconfig/libdpdk.pc"
           sed -i "s/prefix=.*/prefix=/g" "${PWD}/install/lib/aarch64-linux-gnu/pkgconfig/libdpdk-libs.pc"
           PKG_VERSION_NAME=`cat VERSION | awk -F'.' '{print $1"."$2}'`
+          MRVL_PKG_VERSION=`cat MRVL_VERSION`
           DISTRO=ubuntu-`lsb_release -rs`
           mkdir -p "${PWD}/install/debian"
           mkdir -p "${PWD}/install/DEBIAN"
@@ -131,11 +104,11 @@ jobs:
           rm -rf "${PWD}/install/~" "${PWD}/install/home"
           mv "${PWD}/install" "${PWD}/dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64"
           dpkg --build "dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64"
-          cp "dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64.deb" ${BASE_DIR}/artifacts/.
-          echo "PKG_VERSION_NAME=${PKG_VERSION_NAME}" >> ${BASE_DIR}/artifacts/env
-          echo "MRVL_PKG_VERSION=${MRVL_PKG_VERSION}" >> ${BASE_DIR}/artifacts/env
-          echo "PKG_POSTFIX=${PKG_POSTFIX}" >> ${BASE_DIR}/artifacts/env
-          echo "DISTRO=${DISTRO}" >> ${BASE_DIR}/artifacts/env
+          cp "dpdk-${PKG_VERSION_NAME}-cn10k${PKG_POSTFIX}_${MRVL_PKG_VERSION}_arm64.deb" ${PWD}/artifacts/.
+          echo "PKG_VERSION_NAME=${PKG_VERSION_NAME}" >> ${PWD}/artifacts/env
+          echo "MRVL_PKG_VERSION=${MRVL_PKG_VERSION}" >> ${PWD}/artifacts/env
+          echo "PKG_POSTFIX=${PKG_POSTFIX}" >> ${PWD}/artifacts/env
+          echo "DISTRO=${DISTRO}" >> ${PWD}/artifacts/env
       - name: Export version name
         id: artifacts
         run: |
