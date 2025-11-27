@@ -162,7 +162,7 @@ jobs:
           BASE_DIR="${PWD}"
           cd "${PWD}/dao"
           wget "https://github.com/nagendraputhane/test-workflows/releases/download/dpdk-cn10k-24.11_25.11.0-ubuntu-24.04-devel/dpdk-24.11-cn10k-devel_25.11.0_arm64.deb"
-          sudo apt-get install -y ./" dpdk-24.11-cn10k-devel_25.11.0_arm64.deb "
+          sudo apt-get install -y ./"dpdk-24.11-cn10k-devel_25.11.0_arm64.deb"
           ccache -p
           pkg-config --list-all
           unset CC
