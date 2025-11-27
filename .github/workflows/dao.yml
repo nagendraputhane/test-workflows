@@ -72,7 +72,7 @@ jobs:
           EVENT="${{ github.event_name }}"
 
           # Extract first two fields = YY.MM from the VERSION file.
-          BASE=$(cut -d. -f1,2 < VERSION)
+          BASE=25.10
 
           # If event is a Tag Push
           if [ "$EVENT" = "push" ]; then
