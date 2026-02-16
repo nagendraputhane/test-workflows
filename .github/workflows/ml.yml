@@ -31,6 +31,7 @@ jobs:
       - name: Generate ML models package
         run: |
           source ${PWD}/artifacts/env
+          set -x
           BASE_DIR=${PWD}
           DISTRO=ubuntu-`lsb_release -rs`
           echo "DISTRO=${DISTRO}" >> ${PWD}/artifacts/env
@@ -60,10 +61,3 @@ jobs:
           mv "${PWD}/install" "${PWD}/ml-models-cn10k${PKG_POSTFIX}_${PKG_VERSION_NAME}_arm64"
           dpkg --build "${PWD}/ml-models-cn10k${PKG_POSTFIX}_${PKG_VERSION_NAME}_arm64"
           cp -r "${PWD}/ml-models-cn10k${PKG_POSTFIX}_${PKG_VERSION_NAME}_arm64.deb" ${BASE_DIR}/artifacts/.
-      - name: Release ML models cn10k package
-        uses: softprops/action-gh-release@v2.2.2
-        if: ${{ github.event_name == 'push' }}
-        with:
-          tag_name: ml-models-cn10k-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}-${{ steps.artifacts.outputs.DISTRO }}
-          files: |
-            ${{ github.workspace }}/artifacts/ml-models-cn10k${{ steps.artifacts.outputs.PKG_POSTFIX }}_${{ steps.artifacts.outputs.PKG_VERSION_NAME }}_arm64.deb
