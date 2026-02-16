@@ -26,7 +26,7 @@ jobs:
           mkdir -p "${PWD}/artifacts"
           git tag --points-at HEAD > /tmp/tags
           [ -s /tmp/tags ] && PKG_POSTFIX= || PKG_POSTFIX=-devel
-          echo "PKG_VERSION_NAME=`cat VERSION`" >> "${PWD}/artifacts/env"
+          echo "PKG_VERSION_NAME=26.02.0" >> "${PWD}/artifacts/env"
           echo "PKG_POSTFIX=${PKG_POSTFIX}" >> "${PWD}/artifacts/env"
       - name: Generate ML models package
         run: |
@@ -60,29 +60,6 @@ jobs:
           mv "${PWD}/install" "${PWD}/ml-models-cn10k${PKG_POSTFIX}_${PKG_VERSION_NAME}_arm64"
           dpkg --build "${PWD}/ml-models-cn10k${PKG_POSTFIX}_${PKG_VERSION_NAME}_arm64"
           cp -r "${PWD}/ml-models-cn10k${PKG_POSTFIX}_${PKG_VERSION_NAME}_arm64.deb" ${BASE_DIR}/artifacts/.
-      - name: Export version name
-        id: artifacts
-        run: |
-          source "${PWD}/artifacts/env"
-          echo $PKG_VERSION_NAME
-          echo "PKG_VERSION_NAME=${PKG_VERSION_NAME}" >> "$GITHUB_OUTPUT"
-          echo $DISTRO
-          echo "DISTRO=${DISTRO}" >> "$GITHUB_OUTPUT"
-          [[ "$PKG_POSTFIX" == "-devel" ]] && TAG=devel || TAG=${PKG_VERSION_NAME}
-          [[ "$PKG_POSTFIX" == "-devel" ]] && IS_DEVEL="true" || IS_DEVEL="false"
-          echo "PKG_POSTFIX=${PKG_POSTFIX}" >> "$GITHUB_OUTPUT"
-          echo "TAG=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "IS_DEVEL=${IS_DEVEL}" >> "$GITHUB_OUTPUT"
-      - name: Delete existing ML models release
-        if: ${{ github.event_name == 'push' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if gh release view ml-models-cn10k-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}-${{ steps.artifacts.outputs.DISTRO }}-${{ steps.artifacts.outputs.TAG }}; then
-            gh release delete ml-models-cn10k-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}-${{ steps.artifacts.outputs.DISTRO }}-${{ steps.artifacts.outputs.TAG }} --cleanup-tag -y
-          else
-            echo "Release not found"
-          fi
       - name: Release ML models cn10k package
         uses: softprops/action-gh-release@v2.2.2
         if: ${{ github.event_name == 'push' }}
@@ -90,17 +67,3 @@ jobs:
           tag_name: ml-models-cn10k-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}-${{ steps.artifacts.outputs.DISTRO }}-${{ steps.artifacts.outputs.TAG }}
           files: |
             ${{ github.workspace }}/artifacts/ml-models-cn10k${{ steps.artifacts.outputs.PKG_POSTFIX }}_${{ steps.artifacts.outputs.PKG_VERSION_NAME }}_arm64.deb
-      - name: Dispatch package update event
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          curl -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.PPA_REPO_SECRET }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/marvellembeddedprocessors/packages/dispatches \
-            -d '{"event_type":"dispatch-event", "client_payload": {"package" : "ml-models",
-            "tag": "ml-models-cn10k-${{ steps.artifacts.outputs.PKG_VERSION_NAME }}-${{ steps.artifacts.outputs.DISTRO }}-${{ steps.artifacts.outputs.TAG }}",
-            "distro" : "${{ steps.artifacts.outputs.DISTRO }}",
-            "platform" : "cn10k",
-            "devel" : "${{ steps.artifacts.outputs.IS_DEVEL }}"}}'
